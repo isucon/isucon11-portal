@@ -54,6 +54,15 @@ bot.member_join() do |event|
   end
 end
 
+bot.member_leave() do |event|
+  next unless event.server.id.to_s == expected_server_id
+  contestant = Contestant.find_by(discord_id: event.user.id)
+  if contestant
+    Rails.logger.info "GUILD_MEMBER_REMOVE: contestant=#{contestant.id}"
+    SyncDiscordMemberStateOfContestantJob.perform_later(contestant, false)
+  end
+end
+
 CHAIR_EMOJI = "\xf0\x9f\xaa\x91"
 SOS_EMOJI = "\xf0\x9f\x86\x98"
 bot.reaction_add() do |event|

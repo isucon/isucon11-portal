@@ -50,7 +50,7 @@ bot.member_join() do |event|
   if contestant
     Rails.logger.info "GUILD_MEMBER_ADD: contestant=#{contestant.id}"
     MaintainDiscordContestantRolesJob.perform_later(contestant)
-    SyncDiscordMemberStateOfContestantJob.perform_later(contestant)
+    SyncDiscordMemberStateOfContestantJob.perform_later(contestant, true)
   end
 end
 

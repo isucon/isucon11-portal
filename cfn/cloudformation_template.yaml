@@ -1,0 +1,167 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation for ISUCON Contestants
+Resources:
+#########################################
+#  IAM
+########################################
+  IsuconEC2InstanceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          -
+            Effect: "Allow"
+            Principal:
+              Service:
+                - "ec2.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Path: "/"
+  IsuconEC2InstancePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "IsuconEC2InstancePolicy"
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - "s3:ListBucket"
+            Resource: "*"
+      Roles:
+      - !Ref IsuconEC2InstanceRole
+  IsuconEC2InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+      - !Ref IsuconEC2InstanceRole
+
+#########################################
+#  VPC
+########################################
+  IsuconVPC:
+    Type: "AWS::EC2::VPC"
+    Properties:
+      CidrBlock: "192.168.0.0/16"
+      EnableDnsSupport: "true"
+      EnableDnsHostnames: "true"
+      InstanceTenancy: default
+  IsuconInternetGateway:
+    Type: "AWS::EC2::InternetGateway"
+  IsuconInternetGatewayAttachment:
+    Type: "AWS::EC2::VPCGatewayAttachment"
+    Properties:
+      InternetGatewayId: !Ref IsuconInternetGateway
+      VpcId: !Ref IsuconVPC
+  IsuconPublicSubnetA:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1a"
+      CidrBlock: "192.168.0.0/24"
+      VpcId: !Ref IsuconVPC
+  IsuconPublicSubnetC:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1c"
+      CidrBlock: "192.168.1.0/24"
+      VpcId: !Ref IsuconVPC
+  IsuconPublicSubnetD:
+    Type: "AWS::EC2::Subnet"
+    Properties:
+      AvailabilityZone: "ap-northeast-1d"
+      CidrBlock: "192.168.2.0/24"
+      VpcId: !Ref IsuconVPC
+
+#########################################
+#  RouteTable
+########################################
+  IsuconPublicRouteTable:
+    Type: "AWS::EC2::RouteTable"
+    Properties:
+      VpcId: !Ref IsuconVPC
+  IsuconPublicRoute:
+    Type: "AWS::EC2::Route"
+    Properties:
+      RouteTableId: !Ref IsuconPublicRouteTable
+      DestinationCidrBlock: "0.0.0.0/0"
+      GatewayId: !Ref IsuconInternetGateway
+  IsuconPublicSubnetARouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties: 
+      SubnetId: !Ref IsuconPublicSubnetA
+      RouteTableId: !Ref IsuconPublicRouteTable
+  IsuconPublicSubnetCRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties: 
+      SubnetId: !Ref IsuconPublicSubnetC
+      RouteTableId: !Ref IsuconPublicRouteTable
+  IsuconPublicSubnetDRouteTableAssociation:
+    Type: "AWS::EC2::SubnetRouteTableAssociation"
+    Properties: 
+      SubnetId: !Ref IsuconPublicSubnetD
+      RouteTableId: !Ref IsuconPublicRouteTable
+
+#########################################
+#  Security Group
+########################################
+  IsuconEC2InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      VpcId: !Ref IsuconVPC
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: "22"
+          ToPort: "22"
+          CidrIp: "0.0.0.0/0"
+
+#########################################
+#  EC2
+########################################
+  IsuconEC2InstanceA:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0827d8ed0295e3feb
+      InstanceType: c5.large
+      SecurityGroupIds:
+        - !Ref IsuconEC2InstanceSecurityGroup
+      SubnetId: !Ref IsuconPublicSubnetA
+      IamInstanceProfile:
+        !Ref IsuconEC2InstanceProfile
+  IsuconElascicIpA:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref IsuconEC2InstanceA
+
+  IsuconEC2InstanceC:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0827d8ed0295e3feb
+      InstanceType: c5.large
+      SecurityGroupIds:
+        - !Ref IsuconEC2InstanceSecurityGroup
+      SubnetId: !Ref IsuconPublicSubnetC
+      IamInstanceProfile:
+        !Ref IsuconEC2InstanceProfile
+  IsuconElascicIpC:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref IsuconEC2InstanceC
+
+  IsuconEC2InstanceD:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0827d8ed0295e3feb
+      InstanceType: c5.large
+      SecurityGroupIds:
+        - !Ref IsuconEC2InstanceSecurityGroup
+      SubnetId: !Ref IsuconPublicSubnetD
+      IamInstanceProfile:
+        !Ref IsuconEC2InstanceProfile
+  IsuconElascicIpD:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref IsuconEC2InstanceD

@@ -56,24 +56,72 @@ Resources:
     Properties:
       InternetGatewayId: !Ref IsuconInternetGateway
       VpcId: !Ref IsuconVPC
-  IsuconPublicSubnetA:
+  IsuconPublicSubnet:
     Type: "AWS::EC2::Subnet"
     Properties:
-      AvailabilityZone: "ap-northeast-1a"
+      AvailabilityZone: !GetAtt CustomResource.ZoneName
       CidrBlock: "192.168.0.0/24"
       VpcId: !Ref IsuconVPC
-  IsuconPublicSubnetC:
-    Type: "AWS::EC2::Subnet"
+      MapPublicIpOnLaunch: False
+#########################################
+#  Lambda-backed Custom Resource
+########################################
+  CustomResource:
+    Type: Custom::PythonLambdaExecution
     Properties:
-      AvailabilityZone: "ap-northeast-1c"
-      CidrBlock: "192.168.1.0/24"
-      VpcId: !Ref IsuconVPC
-  IsuconPublicSubnetD:
-    Type: "AWS::EC2::Subnet"
+      ServiceToken: !GetAtt CustomFunction.Arn
+
+  CustomFunction:
+    Type: AWS::Lambda::Function
     Properties:
-      AvailabilityZone: "ap-northeast-1d"
-      CidrBlock: "192.168.2.0/24"
-      VpcId: !Ref IsuconVPC
+      Code:
+        ZipFile: |
+          import cfnresponse
+          import boto3
+          def handler(event, context):
+            if event['RequestType'] == "Create":
+              ec2 = boto3.client('ec2')
+              response = ec2.describe_availability_zones(
+                ZoneIds = ['apne1-az2']
+              )
+              ZoneName = response['AvailabilityZones'][0]['ZoneName']
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {"ZoneName" : ZoneName})
+            elif event['RequestType'] == "Update":
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+            elif event['RequestType'] == "Delete":
+              cfnresponse.send(event, context, cfnresponse.SUCCESS, {})
+      Handler: index.handler
+      Runtime: python3.8
+      Timeout: 30
+      Role: !GetAtt CustomFunctionLambdaExecutionRole.Arn
+  CustomFunctionLambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+        - Effect: Allow
+          Principal:
+            Service:
+            - lambda.amazonaws.com
+          Action:
+          - sts:AssumeRole
+      Path: "/"
+      Policies:
+      - PolicyName: IsuconCustomResorucePolicy
+        PolicyDocument:
+          Version: 2012-10-17
+          Statement:
+          - Effect: Allow
+            Action:
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+            Resource: arn:aws:logs:*:*:*
+          - Effect: Allow
+            Action:
+            - ec2:DescribeAvailabilityZones
+            Resource: "*"
 
 #########################################
 #  RouteTable
@@ -88,20 +136,10 @@ Resources:
       RouteTableId: !Ref IsuconPublicRouteTable
       DestinationCidrBlock: "0.0.0.0/0"
       GatewayId: !Ref IsuconInternetGateway
-  IsuconPublicSubnetARouteTableAssociation:
+  IsuconPublicSubnetRouteTableAssociation:
     Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties: 
-      SubnetId: !Ref IsuconPublicSubnetA
-      RouteTableId: !Ref IsuconPublicRouteTable
-  IsuconPublicSubnetCRouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties: 
-      SubnetId: !Ref IsuconPublicSubnetC
-      RouteTableId: !Ref IsuconPublicRouteTable
-  IsuconPublicSubnetDRouteTableAssociation:
-    Type: "AWS::EC2::SubnetRouteTableAssociation"
-    Properties: 
-      SubnetId: !Ref IsuconPublicSubnetD
+    Properties:
+      SubnetId: !Ref IsuconPublicSubnet
       RouteTableId: !Ref IsuconPublicRouteTable
 
 #########################################
@@ -121,47 +159,47 @@ Resources:
 #########################################
 #  EC2
 ########################################
-  IsuconEC2InstanceA:
+  IsuconEC2Instance0:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0827d8ed0295e3feb
       InstanceType: c5.large
       SecurityGroupIds:
         - !Ref IsuconEC2InstanceSecurityGroup
-      SubnetId: !Ref IsuconPublicSubnetA
+      SubnetId: !Ref IsuconPublicSubnet
       IamInstanceProfile:
         !Ref IsuconEC2InstanceProfile
-  IsuconElascicIpA:
+  IsuconElascicIp0:
     Type: AWS::EC2::EIP
     Properties:
-      InstanceId: !Ref IsuconEC2InstanceA
+      InstanceId: !Ref IsuconEC2Instance0
 
-  IsuconEC2InstanceC:
+  IsuconEC2Instance1:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0827d8ed0295e3feb
       InstanceType: c5.large
       SecurityGroupIds:
         - !Ref IsuconEC2InstanceSecurityGroup
-      SubnetId: !Ref IsuconPublicSubnetC
+      SubnetId: !Ref IsuconPublicSubnet
       IamInstanceProfile:
         !Ref IsuconEC2InstanceProfile
-  IsuconElascicIpC:
+  IsuconElascicIp1:
     Type: AWS::EC2::EIP
     Properties:
-      InstanceId: !Ref IsuconEC2InstanceC
+      InstanceId: !Ref IsuconEC2Instance1
 
-  IsuconEC2InstanceD:
+  IsuconEC2Instance2:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0827d8ed0295e3feb
       InstanceType: c5.large
       SecurityGroupIds:
         - !Ref IsuconEC2InstanceSecurityGroup
-      SubnetId: !Ref IsuconPublicSubnetD
+      SubnetId: !Ref IsuconPublicSubnet
       IamInstanceProfile:
         !Ref IsuconEC2InstanceProfile
-  IsuconElascicIpD:
+  IsuconElascicIp2:
     Type: AWS::EC2::EIP
     Properties:
-      InstanceId: !Ref IsuconEC2InstanceD
+      InstanceId: !Ref IsuconEC2Instance2

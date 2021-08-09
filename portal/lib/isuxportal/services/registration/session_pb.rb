@@ -4,6 +4,7 @@
 require 'google/protobuf'
 
 require 'isuxportal/resources/team_pb'
+require 'isuxportal/resources/coupon_pb'
 Google::Protobuf::DescriptorPool.generated_pool.build do
   add_file("isuxportal/services/registration/session.proto", :syntax => :proto3) do
     add_message "isuxportal.proto.services.registration.GetRegistrationSessionQuery" do
@@ -20,6 +21,7 @@ Google::Protobuf::DescriptorPool.generated_pool.build do
       optional :discord_avatar_url, :string, 6
       optional :member_invite_url, :string, 7
       optional :discord_server_id, :string, 8
+      optional :coupon, :message, 9, "isuxportal.proto.resources.Coupon"
     end
     add_enum "isuxportal.proto.services.registration.GetRegistrationSessionResponse.Status" do
       value :CLOSED, 0

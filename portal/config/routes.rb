@@ -59,6 +59,8 @@ Rails.application.routes.draw do
       resource :team, only: %i(create)
       # registration/join JoinTeam: POST /api/registration/contestant
       resource :contestant, only: %i(create)
+      # registration/activate_coupon ActivateCoupon: PUT /api/registration/coupon
+      put 'coupon' => 'coupons#update'
     end
 
     scope path: 'audience', module: 'audience' do

@@ -38,6 +38,8 @@ class Api::Registration::SessionsController < Api::Registration::ApplicationCont
       raise "undeterminable status"
     end
 
+    coupon = Coupon.find_by(team_id: @team.id)
+
     render protobuf: Isuxportal::Proto::Services::Registration::GetRegistrationSessionResponse.new(
       team: @team&.to_pb(detail: current_contestant_include_disqualified&.id == current_team&.leader_id, member_detail: true, members: true),
       status: status,
@@ -47,6 +49,7 @@ class Api::Registration::SessionsController < Api::Registration::ApplicationCont
       discord_avatar_url: discord_login&.fetch('avatar_url'),
       member_invite_url: @team && registration_url(team_id: @team.id, invite_token: @team.invite_token), # TODO:
       discord_server_id: status == Isuxportal::Proto::Services::Registration::GetRegistrationSessionResponse::Status::JOINED ? Rails.application.config.x.discord.server_id : "",
+      coupon: coupon&.to_pb
     )
   end
 

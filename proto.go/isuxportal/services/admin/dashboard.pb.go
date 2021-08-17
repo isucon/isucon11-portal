@@ -8,7 +8,7 @@ package admin
 
 import (
 	timestamp "github.com/golang/protobuf/ptypes/timestamp"
-	resources "github.com/isucon/isucon10-portal/proto.go/isuxportal/resources"
+	resources "github.com/isucon/isucon11-portal/proto.go/isuxportal/resources"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"

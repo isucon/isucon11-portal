@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
   spec.email         = ["her@sorah.jp"]
 
   spec.summary       = %q{isux_hako_deployment}
-  spec.homepage      = "https://github.com/isucon/isucon10-portal"
+  spec.homepage      = "https://github.com/isucon/isucon11-portal"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org. To allow pushes either set the 'allowed_push_host'

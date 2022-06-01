@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  supervisor:
+    build:
+      dockerfile: supervisor/Dockerfile
+      context: ../
+    networks:
+      - portal_default
+    environment:
+      ISUXPORTAL_SUPERVISOR_ENDPOINT_URL: 'http://appgrpc:4000'
+      ISUXPORTAL_SUPERVISOR_TOKEN: token
+      ISUXPORTAL_SUPERVISOR_TEAM_ID: 1
+      ISUXPORTAL_SUPERVISOR_INSTANCE_NAME: hoge
+      ISUXPORTAL_SUPERVISOR_HARD_TIMEOUT: 70
+      ISUXPORTAL_SUPERVISOR_LOG_DIRECTORY: /var/log/isuxportal-supervisor
+      ISUXPORTAL_SUPERVISOR_INTERVAL_AFTER_EMPTY_RECEIVE: 2
+
+networks:
+  portal_default:
+    external: true
